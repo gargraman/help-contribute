@@ -165,7 +165,7 @@ A few notes on why pattern matching is the right first stage in any pipeline tha
 
 The pipeline assumption is that *cheap pattern matching plus targeted LLM validation has better economics than either tool alone*. The pattern matcher is the candidate generator; the LLM is the judge. We'll see in Post 7 what good judging looks like.
 
-![The two-stage pipeline: cheap intra-procedural pattern matcher emits thousands of CWE-tagged candidates, then an LLM judge verifies a handful per-finding.](diagrams/02-pattern-matcher-llm-pipeline.svg)
+![The two-stage pipeline: cheap intra-procedural pattern matcher emits thousands of CWE-tagged candidates, then an LLM judge verifies a handful per-finding.](diagrams/02-pattern-matching.png)
 *Figure 1 — Candidate generator + judge. The asymmetry is the point: the cheap stage runs on every commit and produces orders of magnitude more candidates than the expensive stage can examine, but the expensive stage only ever sees real candidates rather than the whole codebase.*
 
 ---

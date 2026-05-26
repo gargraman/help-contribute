@@ -72,7 +72,7 @@ Now, here's where it gets interesting. The genius of the approach is that it req
 
 Don't worry if this feels abstract — we are about to make it very concrete with RAPTOR's actual fuzzing orchestration.
 
-![Coverage-guided fuzzing as a feedback loop: instrumentation feeds a coverage bitmap; mutation derives child inputs from a corpus; execution either grows the corpus on coverage gain or quarantines the input as a crash.](diagrams/05-afl-feedback-loop.svg)
+![Coverage-guided fuzzing as a feedback loop: instrumentation feeds a coverage bitmap; mutation derives child inputs from a corpus; execution either grows the corpus on coverage gain or quarantines the input as a crash.](diagrams/05-afl-fuzzing.png)
 *Figure 1 — The three-part loop. The corpus grows monotonically because every input that hits a new edge is promoted, and its children inherit a starting point closer to that edge. Crashes are the by-product the operator wants; the loop's actual job is to push coverage as deep into the program as possible.*
 
 ---

@@ -43,7 +43,7 @@ This final post is the one where I stop making the pipeline sound polished. We'l
 
 `/agentic` is RAPTOR's one-command full-pipeline workflow. When you run it against a target, here's what happens:
 
-![Parallel scanners feed merge/dedupe, which feeds the LLM validation stages, which feed Stage E (binary feasibility, conditional) and Stage F (cross-check) and finally the report. Optional --consensus / --judge / --exploit / --patch hang off as dashed post-processors; an optional /understand pre-step feeds the merge layer.](diagrams/08-agentic-orchestration.svg)
+![Parallel scanners feed merge/dedupe, which feeds the LLM validation stages, which feed Stage E (binary feasibility, conditional) and Stage F (cross-check) and finally the report. Optional --consensus / --judge / --exploit / --patch hang off as dashed post-processors; an optional /understand pre-step feeds the merge layer.](diagrams/08-putting-together.png)
 *Figure 1 — The full orchestration. Solid path always runs; dashed paths are opt-in flags. Scanners on the left are parallel; everything downstream is sequential and gated by the previous stage. Real-time cost tracking applies to every stage, and `--budget N` stops the pipeline gracefully at $N rather than truncating silently.*
 
 The scanners run in parallel. Their SARIF outputs merge and deduplicate. The merged inventory feeds the LLM validation pipeline (Posts 4 and 7). Binary memory-corruption findings additionally route through Stage E feasibility analysis (Post 6). Stage F catches contradictions. Stage 1 emits the final report.
@@ -198,7 +198,7 @@ These categories matter for two reasons: **audit trails** (when a finding is dis
 - **[NVD](https://nvd.nist.gov/)** — the National Vulnerability Database
 - **Registry metadata** — PyPI, npm, Crates.io, RubyGems, Maven, Go modules, Composer, NuGet, Debian, Homebrew
 
-It also runs supply-chain heuristics including [typosquat detection](https://blog.sonatype.com/typosquat-malware-discovered-in-the-python-package-index-pypi) against declared dependencies. A malicious `reqeusts` package (with the transposed `qe`) in `requirements.txt` won't slip by unnoticed.
+It also runs supply-chain heuristics including [typosquat detection](https://blog.sonatype.com/this-week-in-malware-typosquats-in-pypi-dependency-confusion-packages) against declared dependencies. A malicious `reqeusts` package (with the transposed `qe`) in `requirements.txt` won't slip by unnoticed.
 
 ---
 

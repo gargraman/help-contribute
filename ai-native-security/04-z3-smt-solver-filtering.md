@@ -221,7 +221,7 @@ The key design choice: **indeterminate is never treated as UNSAT**. The framewor
 | Case 3a (`strlen` call) | None (unparseable) | Full review runs |
 | Case 3b (`validate` call) | None (partial parse) | Full review runs |
 
-![Each CodeQL finding's path conditions are handed to Z3, which returns SAT (with a witness), UNSAT, or indeterminate — each routed to a different downstream action.](diagrams/04-smt-decision-tree.svg)
+![Each CodeQL finding's path conditions are handed to Z3, which returns SAT (with a witness), UNSAT, or indeterminate — each routed to a different downstream action.](diagrams/04-smt-solver.png)
 *Figure 1 — The three-way decision visualised. SAT pulls the witness values into the LLM prompt as a free PoC; UNSAT kills the finding before any expensive analysis runs; indeterminate gracefully degrades to full LLM review with a warning. The framework never silently drops a finding it couldn't reason about.*
 
 The empirical sweet spot for SMT pre-screening is **CWE-190 (integer overflow), CWE-120 / CWE-122 (buffer overflows), CWE-193 (off-by-one), and CWE-476 (null pointer dereference)**. These are exactly the CWEs whose preconditions reduce naturally to bitvector or pointer-nullness constraints.

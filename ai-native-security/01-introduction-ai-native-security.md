@@ -83,7 +83,7 @@ Each one has a fundamentally different cost and confidence trade-off:
 | Fuzzing | Hours | Very high — has a crashing input | Bugs not on instrumented paths |
 | Dynamic web testing | Variable | High when reproducible | Logic flaws, auth bypasses |
 
-![The four pillars positioned by setup cost and per-finding confidence, with each pillar's dominant blind spot called out.](diagrams/01-four-pillars-quadrant.svg)
+![The four pillars positioned by setup cost and per-finding confidence, with each pillar's dominant blind spot called out.](diagrams/01-ai-native-security.png)
 *Figure 1 — The same trade-offs as a quadrant: cheaper pillars sit lower-left, higher-confidence ones upper-right. The label inside each bubble is what that pillar **can't** see, which is why running only one of them leaves obvious gaps.*
 
 A team running only one of these has blind spots that are obvious in retrospect. A team running all four ends up with a different problem: an enormous combined output that nobody can triage.

@@ -64,7 +64,7 @@ This is exactly the wall we talked about at the end of Post 2. And it's the reas
 
 The XSS example above is a clean illustration. The user-controlled `name` from `request.args` flows through three helper functions and ends up inside an HTML response without escaping. No Semgrep pattern fires on any single line: `request.args.get('name')` is fine, `f"<h1>{s}</h1>"` is fine, `Response(html, ...)` is fine. The bug is in the *composition*, not in any individual statement.
 
-![Three functions across two files: a source, a helper that propagates taint via string concatenation, and a sink. The would-be sanitizer is missing.](diagrams/03-source-sanitizer-sink-trace.svg)
+![Three functions across two files: a source, a helper that propagates taint via string concatenation, and a sink. The would-be sanitizer is missing.](diagrams/03-dataflow-analysis.png)
 *Figure 1 — The classic source / sanitiser / sink shape applied to a multi-function trace. Pattern matching sees one function at a time and cannot connect the source to the sink through the helpers. Dataflow analysis builds the call graph during extraction and then asks: is there any source → sink path with no sanitiser on it?*
 
 The canonical open-source tool in this category is [CodeQL](https://codeql.github.com/docs/), built by GitHub (originally Semmle). It powers GitHub Advanced Security and its query language is well-designed enough that the security community has invested heavily in writing queries for it.
@@ -209,5 +209,5 @@ A few things about dataflow analysis worth internalising if you're building LLM 
 ## Sources and further reading
 - *[CodeQL documentation](https://codeql.github.com/docs/) — query language reference and tutorials*
 - *[CodeQL Standard Libraries on GitHub](https://github.com/github/codeql) — the source/sink/sanitiser catalogues for every supported language*
-- *Avgerinos et al., ["The Mayhem Cyber Reasoning System"](https://users.ece.cmu.edu/~dbrumley/pdf/Avgerinos%20et%20al._2018_The%20Mayhem%20Cyber%20Reasoning%20System.pdf) — IEEE S&P Magazine, 2018. The system that won DARPA's Cyber Grand Challenge in 2016; a good read on combining static analysis with symbolic execution in production.*
+- *Avgerinos et al., ["The Mayhem Cyber Reasoning System"](https://ieeexplore.ieee.org/document/8328972/) — IEEE S&P Magazine, 2018. The system that won DARPA's Cyber Grand Challenge in 2016; a good read on combining static analysis with symbolic execution in production.*
 - *Cifuentes & Scholz, ["Parfait — Designing a Scalable Bug Checker"](https://dl.acm.org/doi/10.1145/1394504.1394505) — SAW 2008. One of the better short papers on the engineering trade-offs of dataflow-based bug finders.*

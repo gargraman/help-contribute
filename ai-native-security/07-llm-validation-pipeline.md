@@ -43,7 +43,7 @@ Before we get to security pipelines specifically, let me state the single most i
 
 > **An LLM cannot reliably verify its own reasoning in the same context that produced it. The fix is to spawn a separate verification stage, with no access to the first stage's reasoning, that is given only the *claims* and asked to check them against ground truth.**
 
-![The eight-stage pipeline laid out in two lanes: a generator lane (stages 0, A, B, D, E, 1) and a verifier lane (stages C, F) running in fresh contexts. Dashed arrows show claims flowing into the verifier and corrections flowing back.](diagrams/07-llm-validation-pipeline.svg)
+![The eight-stage pipeline laid out in two lanes: a generator lane (stages 0, A, B, D, E, 1) and a verifier lane (stages C, F) running in fresh contexts. Dashed arrows show claims flowing into the verifier and corrections flowing back.](diagrams/07-llm-validation-pipeline.png)
 *Figure 1 — The pattern made concrete: the verifier lane is **physically separate** from the generator lane and shares none of its context. Stage C verifies individual claims from Stage B; Stage F verifies cross-stage consistency of the whole output bundle. Same architectural pattern, two granularities.*
 
 That's it. That's the pattern. Once you internalise it, you start to see why so many LLM applications produce confidently wrong outputs even when you "ask the model to double-check its work" — because asking the same model in the same session is exactly *not* what verification means.
