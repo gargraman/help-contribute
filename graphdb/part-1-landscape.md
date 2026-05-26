@@ -22,10 +22,10 @@ Ready? Let's jump in 🚀
 ## Blog Series
 
 📌 **Part 1: So You Need a Graph Database — The Landscape** *(this post!)*
-Part 2: Graph Database Internals: How Storage Engines Decide Your Performance Ceiling *(coming next!)*
-Part 3: Graph Query Languages Compared: Cypher vs Gremlin vs GSQL vs DQL *(coming soon!)*
-Part 4: Graph Databases in Production: What Breaks, Why It Breaks, and How to Contain It *(coming soon!)*
-Part 5: Running Graph Databases in Production: Optimization, Pitfalls, and the Go-Live Playbook *(coming soon!)*
+[Part 2: Graph Database Internals: How Storage Engines Decide Your Performance Ceiling](part-2-engine.md)
+[Part 3: Graph Query Languages Compared: Cypher vs Gremlin vs GSQL vs DQL](part-3-languages.md)
+[Part 4: Graph Databases in Production: What Breaks, Why It Breaks, and How to Contain It](part-4-the-catch.md)
+[Part 5: Running Graph Databases in Production: Optimization, Pitfalls, and the Go-Live Playbook](part-5-surviving-production.md)
 
 ---
 
@@ -70,7 +70,8 @@ A graph traversal? It follows the same path in four pointer hops. The database d
 
 **Cybersecurity threat analysis.** When a credential is compromised, the question is: "what can an attacker reach from here?" That's a shortest-path problem on a graph. Traditional SIEM tools log events but don't answer structural questions about what's *reachable*. A graph does.
 
-> 📸 **Image placeholder:** A property graph showing a fraud detection schema — Account, Device, IP, and Merchant nodes with labeled edges. One fraud ring highlighted in red. *Caption: "A fraud ring as a graph: 4 hops to connect the dots that 4 JOINs can't."*
+![A fraud detection property graph showing Account, Device, IP, and Merchant nodes with labeled edges, with one fraud ring highlighted](images/part1-fraud-detection-graph.png)
+*A fraud ring as a graph: 4 hops to connect the dots that 4 JOINs can't.*
 
 ---
 
@@ -94,7 +95,8 @@ The result? A 5-hop traversal on a 10-billion-node graph costs the same as on a 
 
 This is why graph databases win for relationship-heavy queries. And this is what you're paying for when you give up the familiar comfort of SQL.
 
-> 📸 **Image placeholder:** Side-by-side — relational schema with junction table and two JOIN arrows vs. property graph with direct edges between Person nodes. *Caption: "Same data, fundamentally different access pattern."*
+![Side-by-side comparison of relational schema with junction table vs property graph with direct edges between Person nodes](images/part1-relational-vs-property-graph.png)
+*Same data, fundamentally different access pattern.*
 
 ---
 
@@ -116,7 +118,8 @@ Let me give you the five dimensions that actually determine whether a database f
 
 **6. Graph algorithms library.** If your workload includes PageRank, community detection, centrality, or shortest-path-at-scale, the *quality of the built-in algorithms library* matters more than raw query speed. Neo4j ships GDS (50+ production-grade algorithms). TigerGraph has an open algorithms library with MPP execution. Memgraph has MAGE. If you'll write your own BFS in Cypher, this dimension barely matters; if you won't, it's decisive.
 
-> 📸 **Image placeholder:** A 9 × 5 table — databases as rows, dimensions as columns, cells color-coded green/yellow/red. *Caption: "Nine databases, five dimensions — your shortlist is where green aligns with what matters most to you."*
+![A 9×5 comparison table with databases as rows and evaluation dimensions as columns, color-coded by fit](images/part1-database-comparison-table.png)
+*Nine databases, five dimensions — your shortlist is where green aligns with what matters most to you.*
 
 ---
 
@@ -172,4 +175,4 @@ If this post helped you shortlist tools, great. But here's the thing — picking
 
 Don't worry, we'll break it down step by step. No scary internals magic — just bytes, pointers, and analogies. 🚀
 
-*Next up: Graph Database Internals: How Storage Engines Decide Your Performance Ceiling →*
+*[Next up: Graph Database Internals: How Storage Engines Decide Your Performance Ceiling →](part-2-engine.md)*

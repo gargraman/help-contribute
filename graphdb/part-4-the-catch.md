@@ -17,11 +17,11 @@ Let's walk through what actually breaks, why it breaks, and how to contain it be
 
 ## Blog Series
 
-Part 1: So You Need a Graph Database — The Landscape
-Part 2: Graph Database Internals: How Storage Engines Decide Your Performance Ceiling
-Part 3: Graph Query Languages Compared: Cypher vs Gremlin vs GSQL vs DQL
+[Part 1: So You Need a Graph Database — The Landscape](part-1-landscape.md)
+[Part 2: Graph Database Internals: How Storage Engines Decide Your Performance Ceiling](part-2-engine.md)
+[Part 3: Graph Query Languages Compared: Cypher vs Gremlin vs GSQL vs DQL](part-3-languages.md)
 📌 **Part 4: Graph Databases in Production: What Breaks, Why It Breaks, and How to Contain It** *(this post!)*
-Part 5: Running Graph Databases in Production: Optimization, Pitfalls, and the Go-Live Playbook *(coming next!)*
+[Part 5: Running Graph Databases in Production: Optimization, Pitfalls, and the Go-Live Playbook](part-5-surviving-production.md)
 
 ---
 
@@ -105,7 +105,8 @@ Cap edge count per bucket by design. Don't traverse all history when you only ne
 
 **5. TigerGraph degree-aware partitioning.** If your domain guarantees supernodes (social graphs, product catalogs, financial hubs), design for them upfront. TigerGraph's MPP distributes the edge list across partition machines. Structural choice, not tuning choice.
 
-> 📸 **Image placeholder:** Before/after — one node with 500M radiating edges vs. restructured with proxy nodes. *Caption: "The proxy node pattern: trade model complexity for traversal predictability."*
+![Before and after: one node with 500M radiating edges on the left, restructured hierarchy with proxy nodes on the right](images/part4-supernode-proxy-pattern.png)
+*The proxy node pattern: trade model complexity for traversal predictability.*
 
 ---
 
@@ -125,7 +126,8 @@ Different databases handle this differently:
 
 **Memgraph (No sharding).** The entire graph lives on one machine. No cross-partition traversal because there are no partitions. Every hop is a local memory access. The trade-off: when the graph outgrows a single machine's RAM, you need a different architecture. But until that point, Memgraph's traversal latency is fundamentally better than any sharded system.
 
-> 📸 **Image placeholder:** A 5-hop traversal across 3 machines with RTT callout boxes at partition boundaries. *Caption: "Hop 3 crosses a datacenter boundary. Every query that does this pays the Tokyo call tax."*
+![A 5-hop graph traversal across 3 machines with network RTT callout boxes shown at each partition boundary crossing](images/part4-cross-partition-traversal.png)
+*Hop 3 crosses a datacenter boundary. Every query that does this pays the Tokyo call tax.*
 
 ---
 
@@ -179,7 +181,8 @@ Every production database must answer: "What happens if the server loses power m
 | Neptune | Managed AWS promotion | < 30 seconds (AWS SLA) |
 | JanusGraph | Stateless restart; Cassandra handles data | Near-instant restart |
 
-> 📸 **Image placeholder:** Three replication topologies side-by-side — Memgraph, Neo4j, TigerGraph. *Caption: "Three databases, three replication models — three different failure modes."*
+![Three replication topologies side-by-side showing Memgraph NuRaft, Neo4j Raft Primary/Secondary, and TigerGraph MPP replication](images/part4-replication-topologies.png)
+*Three databases, three replication models — three different failure modes.*
 
 ### Replication Modes and Read-Your-Writes
 
@@ -239,4 +242,4 @@ The final step is turning that awareness into repeatable production discipline: 
 
 Don't worry, it's practical: checklists, mitigations, and the exact metrics to watch. No theory. Just the stuff that keeps you off the pager at 3am. 🚀
 
-*Next: Running Graph Databases in Production: Optimization, Pitfalls, and the Go-Live Playbook →*
+*[Next: Running Graph Databases in Production: Optimization, Pitfalls, and the Go-Live Playbook →](part-5-surviving-production.md)*

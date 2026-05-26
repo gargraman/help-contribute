@@ -19,11 +19,11 @@ Let's jump in 🚀
 
 ## Blog Series
 
-Part 1: So You Need a Graph Database — The Landscape
-Part 2: Graph Database Internals: How Storage Engines Decide Your Performance Ceiling
+[Part 1: So You Need a Graph Database — The Landscape](part-1-landscape.md)
+[Part 2: Graph Database Internals: How Storage Engines Decide Your Performance Ceiling](part-2-engine.md)
 📌 **Part 3: Graph Query Languages Compared: Cypher vs Gremlin vs GSQL vs DQL** *(this post!)*
-Part 4: Graph Databases in Production: What Breaks, Why It Breaks, and How to Contain It *(coming next!)*
-Part 5: Running Graph Databases in Production: Optimization, Pitfalls, and the Go-Live Playbook *(coming soon!)*
+[Part 4: Graph Databases in Production: What Breaks, Why It Breaks, and How to Contain It](part-4-the-catch.md)
+[Part 5: Running Graph Databases in Production: Optimization, Pitfalls, and the Go-Live Playbook](part-5-surviving-production.md)
 
 ---
 
@@ -258,7 +258,8 @@ CREATE VECTOR INDEX productEmbeddings FOR (p:Product) ON (p.embedding)
 OPTIONS {indexConfig: {`vector.dimensions`: 1536, `vector.similarity_function`: 'cosine'}}
 ```
 
-> 📸 **Image placeholder:** Index type taxonomy — five branches with sample query patterns. *Caption: "Picking the wrong index type is as bad as having no index."*
+![Index type taxonomy with five branches — range, full-text, spatial, composite, and vector — each with sample query patterns](images/part3-index-type-taxonomy.png)
+*Picking the wrong index type is as bad as having no index.*
 
 ---
 
@@ -305,7 +306,8 @@ ORDER BY score DESC
 
 The first two lines use the vector index. The MATCH clause uses the graph. One query, one round trip. Pretty powerful, right?
 
-> 📸 **Image placeholder:** HybridRAG architecture flow — vector search → graph traversal → LLM reasoning. *Caption: "HybridRAG: vector finds the entry point, the graph fills in the context."*
+![HybridRAG architecture flow: user query → vector search → graph traversal → LLM reasoning → answer](images/part3-hybridrag-architecture.png)
+*HybridRAG: vector finds the entry point, the graph fills in the context.*
 
 ---
 
@@ -332,4 +334,4 @@ You now have the language map and the optimizer mental model. That puts you ahea
 
 Next, we move from "how to build" to "what breaks under load" — the part most vendor material avoids. Supernodes, cross-partition penalties, ACID semantics that mean different things in different databases. The fun stuff. 🚀
 
-*Next: Graph Databases in Production: What Breaks, Why It Breaks, and How to Contain It →*
+*[Next: Graph Databases in Production: What Breaks, Why It Breaks, and How to Contain It →](part-4-the-catch.md)*

@@ -21,11 +21,11 @@ Don't worry — we'll make the internals feel intuitive. By the end, storage eng
 
 ## Blog Series
 
-Part 1: So You Need a Graph Database — The Landscape
+[Part 1: So You Need a Graph Database — The Landscape](part-1-landscape.md)
 📌 **Part 2: Graph Database Internals: How Storage Engines Decide Your Performance Ceiling** *(this post!)*
-Part 3: Graph Query Languages Compared: Cypher vs Gremlin vs GSQL vs DQL *(coming next!)*
-Part 4: Graph Databases in Production: What Breaks, Why It Breaks, and How to Contain It *(coming soon!)*
-Part 5: Running Graph Databases in Production: Optimization, Pitfalls, and the Go-Live Playbook *(coming soon!)*
+[Part 3: Graph Query Languages Compared: Cypher vs Gremlin vs GSQL vs DQL](part-3-languages.md)
+[Part 4: Graph Databases in Production: What Breaks, Why It Breaks, and How to Contain It](part-4-the-catch.md)
+[Part 5: Running Graph Databases in Production: Optimization, Pitfalls, and the Go-Live Playbook](part-5-surviving-production.md)
 
 ---
 
@@ -76,7 +76,8 @@ These four pointers form **doubly-linked lists** — one list per node, threadin
 
 Here's the critical implication: Neo4j follows only the pointers it needs. A `MATCH (alice)-[:KNOWS]->(friend)` follows Alice's relationship list, skips non-KNOWS relationships, and loads the endpoint node for each match. A 500-million-edge node has a 17GB storage footprint (500M × 34 bytes) — but Neo4j doesn't load all 17GB. It walks the linked list and filters at each step.
 
-> 📸 **Image placeholder:** Diagram showing a 15-byte Neo4j node record with a pointer to the first relationship, and a 34-byte relationship record with its four pointers. *Caption: "Neo4j 5.x: every relationship record is a doubly-linked list node."*
+![Diagram of a 15-byte Neo4j node record pointing to a 34-byte relationship record with four doubly-linked-list pointers](images/part2-neo4j-record-structure.png)
+*Neo4j 5.x: every relationship record is a doubly-linked list node.*
 
 ### JanusGraph on Cassandra (Non-Native)
 
@@ -104,7 +105,8 @@ Memgraph has two modes:
 - `IN_MEMORY_TRANSACTIONAL` (default): Deltas enabled, MVCC active, full ACID.
 - `IN_MEMORY_ANALYTICAL`: Deltas disabled. No MVCC overhead. 5–10× faster bulk load. Use this for initial data ingestion, then switch back.
 
-> 📸 **Image placeholder:** Side-by-side — JanusGraph wide row (must deserialize all to read one) vs. Neo4j linked-list (follow only what you need). *Caption: "Cassandra wide-row vs. linked-list: the storage model determines your performance ceiling."*
+![Side-by-side comparison of JanusGraph Cassandra wide-row (deserialize all to read one) vs Neo4j linked-list (follow only what you need)](images/part2-wide-row-vs-linked-list.png)
+*Cassandra wide-row vs. linked-list: the storage model determines your performance ceiling.*
 
 ---
 
@@ -144,7 +146,8 @@ Memgraph's MVCC avoids write-write locking: if two transactions write to the sam
 
 The synchronous replication in step 3 means TigerGraph's write latency is bounded by the network RTT between partition replicas. High throughput at scale, but not sub-millisecond for individual writes.
 
-> 📸 **Image placeholder:** Write path flowchart — Application → Begin Transaction → WAL Write → Page Cache → Pointer Update → Commit. *Caption: "Write path in a native graph DB: WAL before page cache, pointer update last."*
+![Write path flowchart: Application → Begin Transaction → WAL Write → Page Cache → Pointer Update → Commit](images/part2-write-path-flowchart.png)
+*Write path in a native graph DB: WAL before page cache, pointer update last.*
 
 ---
 
@@ -180,7 +183,8 @@ An **RDF triple store** has no edge objects. Everything is a `(subject, predicat
 
 **When to choose RDF:** You need SPARQL federation across external datasets, you're integrating with W3C Linked Data standards, or your domain has established ontologies (healthcare HL7 FHIR, scientific publishing). Neptune supports both — if this flexibility matters, Neptune is the practical choice.
 
-> 📸 **Image placeholder:** Same relationship shown two ways — property graph with edge property vs. three RDF triples. *Caption: "Property graph vs. RDF: same relationship, different storage costs."*
+![The same relationship shown as a property graph with edge property on the left, and as three RDF triples on the right](images/part2-property-graph-vs-rdf.png)
+*Property graph vs. RDF: same relationship, different storage costs.*
 
 ---
 
@@ -237,4 +241,4 @@ Next up, we're looking at the other half of the performance equation: query lang
 
 Don't worry — we'll compare the same query in all four languages side by side, so you can see exactly what each optimizer does differently. 🚀
 
-*Next: Graph Query Languages Compared: Cypher vs Gremlin vs GSQL vs DQL →*
+*[Next: Graph Query Languages Compared: Cypher vs Gremlin vs GSQL vs DQL →](part-3-languages.md)*

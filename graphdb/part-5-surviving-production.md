@@ -19,10 +19,10 @@ Ready for the final stretch? Let's go 🚀
 
 ## Blog Series
 
-Part 1: So You Need a Graph Database — The Landscape
-Part 2: Graph Database Internals: How Storage Engines Decide Your Performance Ceiling
-Part 3: Graph Query Languages Compared: Cypher vs Gremlin vs GSQL vs DQL
-Part 4: Graph Databases in Production: What Breaks, Why It Breaks, and How to Contain It
+[Part 1: So You Need a Graph Database — The Landscape](part-1-landscape.md)
+[Part 2: Graph Database Internals: How Storage Engines Decide Your Performance Ceiling](part-2-engine.md)
+[Part 3: Graph Query Languages Compared: Cypher vs Gremlin vs GSQL vs DQL](part-3-languages.md)
+[Part 4: Graph Databases in Production: What Breaks, Why It Breaks, and How to Contain It](part-4-the-catch.md)
 📌 **Part 5: Running Graph Databases in Production: Optimization, Pitfalls, and the Go-Live Playbook** *(this post!)*
 
 ---
@@ -205,7 +205,8 @@ RUN SCHEMA_CHANGE JOB add_email
 
 Best run during low query volume. GraphStudio's schema management UI automates these jobs.
 
-> 📸 **Image placeholder:** Schema evolution decision matrix — database × operation, color-coded by downtime requirement. *Caption: "Not all schema changes are equal — and not all graph databases handle them equally."*
+![Schema evolution decision matrix with databases as rows and schema operations as columns, color-coded by downtime requirement](images/part5-schema-evolution-matrix.png)
+*Not all schema changes are equal — and not all graph databases handle them equally.*
 
 ---
 
@@ -239,7 +240,8 @@ Simplest to implement. Works on any graph database. Zero infrastructure overhead
 
 The risk is significant: isolation relies *entirely* on query discipline. A single missing WHERE clause reads all tenants' data. No enforcement at storage level. Use this only for internal tools and low-sensitivity applications with a small, trusted team.
 
-> 📸 **Image placeholder:** Three-column comparison of isolation strategies with risk levels. *Caption: "Three strategies for multi-tenancy: pick the one that matches your isolation requirement, not just the simplest one."*
+![Three-column comparison of multi-tenancy isolation strategies — separate databases, namespace isolation, and property-based — with risk levels for each](images/part5-multi-tenancy-comparison.png)
+*Three strategies for multi-tenancy: pick the one that matches your isolation requirement, not just the simplest one.*
 
 ---
 
@@ -274,7 +276,8 @@ If you see latency spikes that correlate with GC events, the fix is usually: inc
 - **JanusGraph:** Cassandra JMX metrics + JanusGraph query log analysis
 - **TigerGraph:** Built-in Admin Portal + Prometheus-compatible export
 
-> 📸 **Image placeholder:** Dashboard mockup with four panels — page cache hit ratio, p99 latency, abort rate, replication lag. *Caption: "These four metrics will tell you something is wrong before your users do."*
+![Observability dashboard with four panels showing page cache hit ratio, p99 traversal latency, transaction abort rate, and replication lag](images/part5-observability-dashboard.png)
+*These four metrics will tell you something is wrong before your users do.*
 
 ---
 
