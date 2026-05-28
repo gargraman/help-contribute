@@ -66,11 +66,13 @@ This is the engineering trick. **Cheap deterministic solver in front; expensive 
 
 ## Bitvector arithmetic: matching C semantics
 
-When we encode C code in Z3, we don't use mathematical integers — we use **bitvectors**. A 32-bit unsigned integer in C is not the abstract integer 4,294,967,295; it's a 32-bit pattern that overflows back to 0 when incremented. SMT solvers have a dedicated theory for this, [QF_BV](https://smt-lib.org/logics-all.shtml#QF_BV) — quantifier-free bitvector logic — that models the wrap-around behaviour exactly.
+Here's something that trips up most developers: when you do math in C with `unsigned int`, you're not working with ordinary mathematical integers. You're working with a 32-bit counter that **wraps around** — like an odometer that rolls over from 999,999 back to 0.
 
-This matters because the most interesting bug class in C (integer overflow leading to memory corruption) only exists *because* of wraparound. If we encoded C's `unsigned int` as a mathematical integer, the bug would disappear from the model. Bitvector logic preserves the bug — which is exactly what we want.
+The 32-bit limit is 4,294,967,295. If you add 1 to that, you get 0. If you multiply two numbers whose product exceeds that limit, the result wraps back to `product - 4,294,967,296`.
 
-Z3 supports QF_BV natively. The next sections walk through what happens when you encode real C path conditions in this theory.
+When we encode C code in Z3, we use **bitvectors** to model this wrap-around behaviour exactly. Z3 supports a dedicated theory for this — [QF_BV](https://smt-lib.org/logics-all.shtml#QF_BV) — that makes `unsigned int` overflow behave exactly as it does in real C code.
+
+This matters because the most interesting bug class in C (integer overflow leading to memory corruption) only exists *because* of wraparound. If we modelled C's `unsigned int` as a regular mathematical integer, the overflow would never appear. Bitvector logic preserves it — which is exactly what we want.
 
 ---
 
@@ -87,54 +89,63 @@ To make the SAT/UNSAT story concrete, here are eight C cases drawn from a purpos
 **Case 1a: integer overflow → heap overflow (CWE-190 → CWE-122)**
 
 ```c
-#define MAX_RECORDS  0x40000000u  // 1 billion
-#define MAX_ALLOC    0x8000u      // 32 KB
-#define RECORD_SIZE  16u
+#define MAX_RECORDS  1000000000u  // 1 billion — max allowed count
+#define MAX_ALLOC       32768u   // 32 KB — max allowed allocation
+#define RECORD_SIZE        16u
 
 void case_alloc_overflow(unsigned int count) {
-    unsigned int alloc_size = count * RECORD_SIZE;   // 32-bit multiply, wraps
+    // BUG: this multiply runs BEFORE the guards below — and can wrap
+    unsigned int alloc_size = count * RECORD_SIZE;
 
-    if (count >= MAX_RECORDS) { return; }    // looks protective
-    if (alloc_size >= MAX_ALLOC) { return; } // looks protective
+    if (count >= MAX_RECORDS) { return; }    // guard 1: reject huge counts
+    if (alloc_size >= MAX_ALLOC) { return; } // guard 2: reject huge allocations
 
     record_t *records = malloc(alloc_size);
     for (unsigned int i = 0; i < count; i++) {
-        memset(&records[i], 'A', RECORD_SIZE);  // writes count*16 bytes into alloc_size buffer
+        // writes count × 16 bytes — but the buffer is only alloc_size bytes
+        memset(&records[i], 'A', RECORD_SIZE);
     }
 }
 ```
 
-The function looks safe. Two guards bound `count` and `alloc_size`. The trap is that `alloc_size = count * RECORD_SIZE` is computed in 32-bit unsigned arithmetic *before* the guards run. If `count * 16` wraps, `alloc_size` can be a small value that passes the guard while `count` is enormous.
+The function looks safe. Two guards are supposed to bound `count` and `alloc_size`. The trap is ordering: `count * RECORD_SIZE` is computed *before* the guards run. If the product wraps, `alloc_size` becomes a small number that passes both guards — while `count` stays enormous.
 
-The solver encodes:
+The solver encodes the three conditions that must all hold simultaneously:
 ```
-count < 0x40000000             ; MAX_RECORDS guard (negated)
-alloc_size < 0x8000            ; MAX_ALLOC guard (negated)
-alloc_size == count * 16       ; bitvector multiply, wraps
+count < 1,000,000,000      ; guard 1 passes (count is not huge)
+alloc_size < 32,768        ; guard 2 passes (allocation looks small)
+alloc_size == count * 16   ; the multiply, with 32-bit wrap-around
 ```
 
-Z3 returns SAT with **`count = 0x10000001`** (268,435,457). Verify: `0x10000001 × 16 = 0x100000010`. Truncated to 32 bits: `0x10` (16 bytes). Both guards pass. `malloc(16)` allocates 16 bytes. The loop then writes `0x10000001 × 16 ≈ 4 GB` into that 16-byte buffer.
+Z3 returns SAT with **`count = 268,435,457`** (roughly 268 million).
 
-That `count = 268435457` value can be injected directly into whatever analyst process runs next — a human reviewer, an LLM prompt, a fuzzer's seed input. The downstream analyst doesn't have to figure out the overflow arithmetic — the solver already proved it. Their job is now to reason about exploitability and impact.
+Here's the math: `268,435,457 × 16 = 4,294,967,312`. The 32-bit limit is 4,294,967,295, so this wraps to `4,294,967,312 − 4,294,967,296 = 16`. Both guards see a count of 268M (under 1B ✓) and an allocation of 16 bytes (under 32,768 ✓). `malloc(16)` allocates 16 bytes. The loop then writes `268,435,457 × 16 ≈ 4 GB` into that 16-byte buffer.
+
+That `count = 268,435,457` value can be injected directly into whatever analyst process runs next — a human reviewer, an LLM prompt, a fuzzer's seed input. The downstream analyst doesn't have to figure out the overflow arithmetic — the solver already proved it. Their job is now to reason about exploitability and impact.
 
 **Case 1b: unsigned sum overflow — bounds check bypass (CWE-190 → CWE-120)**
 
 ```c
-if (offset + length <= buffer_size) {           // unsigned wraparound bypass
-    memcpy(shared_buffer + offset, src, length); // OOB write
+// buffer_size = 64
+if (offset + length <= buffer_size) {            // sum can wrap silently
+    memcpy(shared_buffer + offset, src, length); // writes 'length' bytes at 'offset'
 }
 ```
 
-`offset + length` wraps. Z3 finds `offset = 0xFFFF0000`, `length = 0x00010010` → sum = `0x10` ≤ 64 ✓. `memcpy` then writes 65,552 bytes starting 4 GB past the buffer. The signed/unsigned-confusion class of bug, captured deterministically.
+The check looks right — it rejects writes that go past the buffer. But `offset + length` is unsigned 32-bit arithmetic. If the two values add up to more than 4,294,967,295, the sum wraps to a small number that passes the check.
+
+Z3 finds: `offset = 4,294,901,760`, `length = 65,552`. Their sum is `4,294,967,312`, which wraps to **16**. The check sees `16 ≤ 64` and passes. `memcpy` then writes 65,552 bytes starting at an offset of ~4 billion bytes past the buffer. The signed/unsigned-confusion class of bug, captured deterministically.
 
 **Case 1c: off-by-one — `<=` where `<` was meant (CWE-193)**
 
 ```c
-if (index > INDEX_LIMIT) { return; }   // bug: should be >=
-buf[index] = value;                    // OOB when index == 128
+#define INDEX_LIMIT 128
+
+if (index > INDEX_LIMIT) { return; }  // BUG: should be >= to also reject 128
+buf[index] = value;                   // reachable when index == 128 (one past the end)
 ```
 
-The guard uses `>` instead of `>=`, so `index == 128` reaches the write. Z3 trivially finds `index = 128`. The kind of bug humans miss on a tired afternoon — the solver finds it in microseconds.
+The guard uses `>` instead of `>=`, so `index == 128` slips through and writes one byte past the end of the buffer. Z3 trivially finds `index = 128`. The kind of off-by-one humans miss on a tired afternoon — the solver finds it in microseconds.
 
 ### Group 2: UNSAT — the false positives the solver kills
 
@@ -143,9 +154,9 @@ These three cases are dataflow paths a tool correctly identifies as syntacticall
 **Case 2a: value range contradiction**
 
 ```c
-if (x <= 100) { return; }   // x > 100 past here
-if (x >= 50) {              // always true
-    if (x < 50) {           // x > 100 AND x < 50 — impossible
+if (x <= 100) { return; }   // x must be > 100 to get past here
+if (x >= 50) {              // always true when x > 100
+    if (x < 50) {           // impossible: x can't be both > 100 and < 50
         strcpy(dead_buf, data);
     }
 }
@@ -160,7 +171,7 @@ if (ptr == NULL) { return; }  // ptr is non-null past here
 if (ptr != NULL) {
     strncpy(dst, ptr, 32);    // safe path
 } else {
-    strcpy(dst, ptr);         // ptr != NULL ∧ ptr == NULL — impossible
+    strcpy(dst, ptr);         // ptr can't be both non-null AND null — impossible
 }
 ```
 
@@ -169,8 +180,8 @@ UNSAT in microseconds. Discarded.
 **Case 2c: bitmask contradiction**
 
 ```c
-if (flags & 0x1) { return; }    // bit 0 is 0 past here
-if ((flags & 0x1) == 1) {       // bit 0 is 1 — impossible
+if (flags & 0x1) { return; }    // bit 0 is 0 past here (flag not set)
+if ((flags & 0x1) == 1) {       // bit 0 must be 1 — contradicts the line above
     ...
 }
 ```
@@ -197,7 +208,7 @@ The solver's parser sees `strlen(input)` and gives up. Returns `feasible=None`. 
 
 ```c
 if (size >= sizeof(buf)) { return; }    // parseable: size < 256
-if (validate(ptr)) {                    // unparseable
+if (validate(ptr)) {                    // unparseable: solver doesn't know what validate() does
     memcpy(buf, ptr, size);
 }
 ```
@@ -212,8 +223,8 @@ The key design choice: **indeterminate is never treated as UNSAT**. The framewor
 
 | Finding type | Solver result | Action |
 |---|---|---|
-| Case 1a (alloc overflow) | SAT — `count = 0x10000001` | PoC injected into analyst's input; full review runs |
-| Case 1b (sum overflow) | SAT — `offset = 0xFFFF0000, length = 0x10010` | PoC injected; full review |
+| Case 1a (alloc overflow) | SAT — `count = 268,435,457` | PoC injected into analyst's input; full review runs |
+| Case 1b (sum overflow) | SAT — `offset = 4,294,901,760, length = 65,552` | PoC injected; full review |
 | Case 1c (off-by-one) | SAT — `index = 128` | PoC injected; full review |
 | Case 2a (range) | UNSAT | Discarded |
 | Case 2b (nullness) | UNSAT | Discarded |
